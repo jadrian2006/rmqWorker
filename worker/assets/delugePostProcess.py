@@ -18,31 +18,43 @@ elif not os.path.isdir(logpath):
         os.mkdir(logpath)
     except:
         logpath = os.path.dirname(sys.argv[0])
-configPath = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), 'logging.ini')).replace("\\", "\\\\")
-logPath = os.path.abspath(os.path.join(logpath, 'index.log')).replace("\\", "\\\\")
-fileConfig(configPath, defaults={'logfilename': logPath})
-log = logging.getLogger("delugePostProcess")
 
-log.info("Deluge post processing started.")
-
-settings = ReadSettings(os.path.dirname(sys.argv[0]), "autoProcess.ini")
-categories = [settings.deluge['sb'], settings.deluge['cp'], settings.deluge['sonarr'], settings.deluge['radarr'], settings.deluge['sr'], settings.deluge['bypass']]
-remove = settings.deluge['remove']
+#settings = ReadSettings(os.path.dirname(sys.argv[0]), "autoProcess.ini")
+#categories = [settings.deluge['sb'], settings.deluge['cp'], settings.deluge['sonarr'], settings.deluge['radarr'], settings.deluge['sr'], settings.deluge['bypass']]
+#remove = settings.deluge['remove']
 
 def main(argv):
+    logpath = './logs/deluge_convert'
+    if os.name == 'nt':
+        logpath = os.path.dirname(sys.argv[0])
+    elif not os.path.isdir(logpath):
+        try:
+            os.mkdir(logpath)
+        except:
+            logpath = os.path.dirname(sys.argv[0])
+
+    configPath = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), 'logging.ini')).replace("\\", "\\\\")
+    logPath = os.path.abspath(os.path.join(logpath, 'index.log')).replace("\\", "\\\\")
+    fileConfig(configPath, defaults={'logfilename': logPath})
+    log = logging.getLogger("delugePostProcess")
+
+    log.info("Deluge post processing started.")
+
+    settings = ReadSettings(os.path.dirname(sys.argv[0]), "autoProcess.ini")
+    categories = [settings.deluge['sb'], settings.deluge['cp'], settings.deluge['sonarr'], settings.deluge['radarr'], settings.deluge['sr'], settings.deluge['bypass']]
+    remove = settings.deluge['remove']
 
     if len(argv) < 4:
         log.error("Not enough command line parameters present, are you launching this from deluge?")
-        sys.exit()
+        return
+    else:
+        path = str(argv[3])
+        torrent_name = str(argv[2])
+        torrent_id = str(argv[1])
 
-    path = str(argv[3])
-    torrent_name = str(argv[2])
-    torrent_id = str(argv[1])
-    delete_dir = None
-
-    log.debug("Path: %s." % path)
-    log.debug("Torrent: %s." % torrent_name)
-    log.debug("Hash: %s." % torrent_id)
+        log.info("Path: %s." % path)
+        log.info("Torrent: %s." % torrent_name)
+        log.info("Hash: %s." % torrent_id)
 
     client = DelugeRPCClient(host=settings.deluge['host'], port=int(settings.deluge['port']), username=settings.deluge['user'], password=settings.deluge['pass'])
     client.connect()
@@ -74,10 +86,11 @@ def main(argv):
     if settings.deluge['convert']:
     # Check for custom Deluge output_dir
         if settings.deluge['output_dir']:
-            settings.output_dir = settings.deluge['output_dir']
-            log.debug("Overriding output_dir to %s." % settings.deluge['output_dir'])
+            settings.output_dir = os.path.join(settings.deluge['output_dir'], "%s" % torrent_name)
+            log.debug("Overriding output_dir to %s.", settings.deluge['output_dir'])
 
     # Perform conversion.
+
         settings.delete = False
         if not settings.output_dir:
             suffix = "convert"
@@ -180,12 +193,14 @@ def main(argv):
                 log.debug("Successfully removed tempoary directory %s." % delete_dir)
             except:
                 log.exception("Unable to delete temporary directory.")
+                return
 
     if remove:
         try:
             client.call('core.remove_torrent', torrent_id, True)
         except:
             log.exception("Unable to remove torrent from deluge.")
+            return
 
 if __name__ == "__main__":
     main(sys.argv)
