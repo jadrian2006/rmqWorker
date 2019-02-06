@@ -1,0 +1,13 @@
+requests
+requests[security]
+requests-cache
+babelfish
+guessit<2
+subliminal<2
+stevedore==1.19.1
+python-dateutil
+deluge-client
+qtfaststart
+pika
+patool
+pathlib

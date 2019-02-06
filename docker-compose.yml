@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  worker1:
+    build: worker/.
+    image: jadrian2006/worker
+    container_name: rabbit_worker
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/siren:/mnt/siren
+      - /mnt/clio:/mnt/clio
+      - /var/media:/var/media
+    environment:
+      - PUID=1024
+      - PGID=1000
+    env_file:
+      - autoProcess.env
+    restart: on-failure:2
+    stdin_open: true
+    tty: true
