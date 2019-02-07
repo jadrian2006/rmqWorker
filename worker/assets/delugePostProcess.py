@@ -191,6 +191,7 @@ def main(argv):
             try:
                 os.rmdir(delete_dir)
                 log.debug("Successfully removed tempoary directory %s." % delete_dir)
+                return
             except:
                 log.exception("Unable to delete temporary directory.")
                 return
@@ -198,6 +199,7 @@ def main(argv):
     if remove:
         try:
             client.call('core.remove_torrent', torrent_id, True)
+            return
         except:
             log.exception("Unable to remove torrent from deluge.")
             return

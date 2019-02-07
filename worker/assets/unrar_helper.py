@@ -47,6 +47,7 @@ class ProcessFile:
             return False
 
     def extract_archive(self,source,outfile):
+        pathlib.Path(outfile).mkdir(parents=True, exist_ok=True)    
         try:
             Pat.extract_archive(source, outdir=outfile)
             return True
